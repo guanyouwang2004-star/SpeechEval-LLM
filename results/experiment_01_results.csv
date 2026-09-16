@@ -1,0 +1,3 @@
+experiment,condition,spectral_centroid_hz,hf_retention_ratio,hf_drop_percent
+HF_Loss,original,6730.41,1.000,0.0
+HF_Loss,4kHz_lowpass,1779.37,0.264,73.6
