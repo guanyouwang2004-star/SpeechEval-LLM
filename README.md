@@ -68,13 +68,26 @@ The experiment saves:
 
 The baseline labels indicate noise risk, not a final speech-intelligibility score. A real venue diagnosis still requires measured room noise, speech level, reverberation, frequency response, and alignment evidence.
 
+## Experiment 03 — Synthetic Reverberation and Room Metrics
+
+`experiment_03_reverb.py` creates deterministic synthetic room impulse responses with target RT60 values of 0.3, 0.8, 1.5, and 2.5 seconds. It convolves the clean speech with each RIR and calculates room-acoustic evidence from the known impulse response:
+
+- EDT from the 0 to -10 dB decay interval;
+- T20-derived RT60 from the -5 to -25 dB interval;
+- C50 early-to-late energy ratio;
+- D50 early-energy percentage.
+
+The first implementation test produced T20-derived RT60 values of approximately 0.311, 0.805, 1.488, and 2.505 seconds. C50 decreased from approximately +10.18 dB to -4.68 dB as the synthetic decay increased.
+
+The experiment saves reverberant speech, RIR WAV files, a CSV evidence table, and plotted Schroeder energy-decay curves. Metrics are calculated from the RIR rather than inferred from speech alone.
+
 ## Engineering limitations
 
 - Current degradations are synthetic and do not yet represent a measured conference room.
 - White noise is a controlled baseline, while real HVAC, audience, traffic, and equipment noise are spectrally different.
 - Known-reference SNR is available in the experiment but may not be available in field recordings.
 - Spectral centroid is supporting evidence rather than proof of intelligibility.
-- C50, RT60/EDT, ETC, delay, polarity, and repeated listener evaluation are not yet implemented.
+- Real measured RIR import, ETC peak analysis, delay, polarity, and repeated listener evaluation are not yet implemented.
 - LLM integration must be tested against a deterministic rule baseline for hallucinations and repeatability.
 
 ## Run locally
@@ -109,11 +122,23 @@ Custom SNR values and seed:
 python experiment_02_snr.py --snrs 25 15 10 5 0 --seed 7
 ```
 
+Run Experiment 03:
+
+```bash
+python experiment_03_reverb.py
+```
+
+Custom reverberation targets:
+
+```bash
+python experiment_03_reverb.py --rt60s 0.4 0.7 1.2 2.0 --seed 84
+```
+
 ## Roadmap
 
-- Experiment 03: controlled reverberation degradation;
-- add C50, RT60/EDT, and energy-decay evidence;
-- add delay and polarity test cases;
+- import and analyze real measured room impulse responses;
+- Experiment 04: delay and polarity test cases;
+- add ETC-based direct and late-reflection evidence;
 - combine features into one structured diagnostic record;
 - add LLM prompting and API integration;
 - compare rule-based and LLM diagnoses;

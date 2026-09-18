@@ -15,6 +15,14 @@ data/test.wav
            ├── data/generated/test_snr_10db.wav
            ├── data/generated/test_snr_5db.wav
            └── data/generated/test_snr_0db.wav
+
+data/test.wav
+    └── experiment_03_reverb.py
+           ├── data/generated/rir_rt60_0p3s.wav
+           ├── data/generated/rir_rt60_0p8s.wav
+           ├── data/generated/rir_rt60_1p5s.wav
+           ├── data/generated/rir_rt60_2p5s.wav
+           └── data/generated/test_reverb_rt60_*.wav
 ```
 
 For reproducible public experiments, use clearly licensed or self-recorded speech and document the speaker, language, recording chain, sampling rate, and source license without exposing personal information.
