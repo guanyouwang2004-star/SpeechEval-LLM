@@ -1,14 +1,29 @@
 # SpeechEval-LLM
 
-LLM-assisted speech intelligibility evaluation prototype with Python audio analysis and controlled experiments.
+LLM-assisted speech-intelligibility diagnosis prototype with Python audio analysis and controlled experiments.
 
 ## Project goal
 
-This project explores whether structured audio features can support reliable, explainable evaluation of speech intelligibility problems. The long-term goal is to combine Python-based audio preprocessing, acoustic feature extraction, rule-based baselines, LLM reasoning, and controlled experiments into a reproducible engineering prototype.
+SpeechEval-LLM investigates why speech can remain difficult to understand even when sound-pressure level is sufficient. The MVP is limited to five engineering causes:
 
-The current prototype focuses on a simple question:
+- reverberation;
+- late reflections;
+- background noise;
+- high-frequency loss;
+- delay or polarity problems.
 
-> Can a controlled high-frequency loss be detected from measurable spectral changes before introducing an LLM layer?
+The system is designed as an evidence pipeline. DSP measurements and transparent baseline rules come first; a later LLM layer will explain structured evidence, rank likely causes, propose verification steps, and recommend interventions. The LLM is not asked to guess directly from raw audio.
+
+## Diagnostic output target
+
+Each completed diagnostic should report:
+
+1. observation;
+2. measured evidence;
+3. likely cause and alternatives;
+4. verification method;
+5. prioritized intervention;
+6. confidence and limitations.
 
 ## Current pipeline
 
@@ -21,51 +36,46 @@ Controlled degradation
    ↓
 Feature extraction
    ↓
-Rule-based diagnosis
+Rule-based baseline
    ↓
-Visualization and experiment logging
+Experiment logging and visualization
+   ↓
+Structured LLM explanation (planned)
 ```
 
 ## Experiment 01 — High-Frequency Loss Detection
 
-A 4 kHz low-pass filter is applied to the same speech recording to simulate high-frequency attenuation while keeping the source material constant.
+`main.py` applies a sixth-order 4 kHz low-pass filter to the same speech recording. It compares the original and processed signals using spectral centroid and spectrograms.
 
-The prototype then compares the original and processed signals using spectral centroid and spectrograms.
+Observed first-test result:
 
-Observed result from the first controlled test:
+- original spectral centroid: about 6730 Hz;
+- HF-loss spectral centroid: about 1779 Hz;
+- relative centroid drop: about 73.6%;
+- HF-retention ratio: about 0.264.
 
-- Original spectral centroid: about 6730 Hz
-- HF-loss spectral centroid: about 1779 Hz
-- Relative centroid drop: about 73.6%
+This experiment establishes a same-source controlled comparison. Spectral centroid alone is not an intelligibility metric and cannot reliably diagnose HF loss across unrelated speakers or recordings.
 
-The rule-based baseline reports a possible HF-loss condition when the relative centroid reduction is large.
+## Experiment 02 — Controlled Noise and SNR
 
-## Why this matters
+`experiment_02_snr.py` adds deterministic white noise at target SNR values of 20, 10, 5, and 0 dB. Because both the clean reference and injected noise are known, the script can verify the measured SNR before assigning a transparent baseline label.
 
-This is not intended to prove speech intelligibility from one feature. Spectral centroid is only one piece of evidence. The purpose of the first experiment is to establish a reproducible engineering workflow:
+The experiment saves:
 
-1. create a known audio degradation;
-2. extract measurable features;
-3. compare the result against a reference;
-4. test a baseline diagnostic rule;
-5. document limitations before adding an LLM.
+- degraded WAV files under `data/generated/`;
+- measured features and diagnoses in `results/experiment_02_results.csv`;
+- a spectrogram comparison in `results/experiment_02_spectrograms.png`.
+
+The baseline labels indicate noise risk, not a final speech-intelligibility score. A real venue diagnosis still requires measured room noise, speech level, reverberation, frequency response, and alignment evidence.
 
 ## Engineering limitations
 
-- Spectral centroid alone cannot determine speech intelligibility.
-- A low centroid does not automatically imply high-frequency loss across different speakers or recordings.
-- The current rule compares a degraded signal against a reference from the same source material.
-- The present experiment is synthetic and does not yet represent a real conference-room measurement.
-- Future versions should include SNR, reverberation, C50, RT60/EDT, delay/alignment features, and repeated evaluation.
-
-## Next steps
-
-- Experiment 02: controlled background noise / SNR degradation
-- Experiment 03: reverberation-related degradation
-- Combine multiple features into a unified diagnostic function
-- Add structured LLM prompting and API integration
-- Compare rule-based and LLM-based diagnoses
-- Add repeatability, hallucination, and failure-case testing
+- Current degradations are synthetic and do not yet represent a measured conference room.
+- White noise is a controlled baseline, while real HVAC, audience, traffic, and equipment noise are spectrally different.
+- Known-reference SNR is available in the experiment but may not be available in field recordings.
+- Spectral centroid is supporting evidence rather than proof of intelligibility.
+- C50, RT60/EDT, ETC, delay, polarity, and repeated listener evaluation are not yet implemented.
+- LLM integration must be tested against a deterministic rule baseline for hallucinations and repeatability.
 
 ## Run locally
 
@@ -75,16 +85,37 @@ Install dependencies:
 pip install -r requirements.txt
 ```
 
-Place a speech WAV file at:
+Place a clean, licensed or self-recorded mono/stereo speech WAV at:
 
 ```text
 data/test.wav
 ```
 
-Then run:
+Run Experiment 01:
 
 ```bash
 python main.py
 ```
 
-The script will create a processed HF-loss version and display spectrograms for comparison.
+Run Experiment 02:
+
+```bash
+python experiment_02_snr.py
+```
+
+Custom SNR values and seed:
+
+```bash
+python experiment_02_snr.py --snrs 25 15 10 5 0 --seed 7
+```
+
+## Roadmap
+
+- Experiment 03: controlled reverberation degradation;
+- add C50, RT60/EDT, and energy-decay evidence;
+- add delay and polarity test cases;
+- combine features into one structured diagnostic record;
+- add LLM prompting and API integration;
+- compare rule-based and LLM diagnoses;
+- add repeatability, hallucination, and failure-case tests;
+- compare selected outputs with experienced listeners or engineers.
